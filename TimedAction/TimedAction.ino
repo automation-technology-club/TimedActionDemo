@@ -55,10 +55,14 @@
       Serial.begin(9600);
     }
      
-    void loop(){
+    void loop() {
+    	check();
+    }
+     
+    void check(){
       blinkAction.check(); //trigger every second
       physicalPixelAction.check(); //trigger every 50 millisecond
-      //asciiTableAction.check(); //trigger every 10 second
+      asciiTableAction.check(); //trigger every 10 second
     blink11action.check();
     blink10action.check();
     blink9action.check();
@@ -131,7 +135,9 @@
         Serial.println(number, BIN);   // prints value as string in binary (base 2)
                                                                              // also prints ending line break
         number++; // to the next character
+        check();
       }
-      asciiTableAction.disable();
+      
+      //asciiTableAction.disable();
     }
      
