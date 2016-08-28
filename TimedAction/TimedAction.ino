@@ -15,7 +15,10 @@
      
     #include <TimedAction.h>
     #include <NewPing.h>
-    
+    #include <SPI.h>
+#include <string.h>
+#include "DHT.h"
+ 
     //this initializes a TimedAction object that will change the state of an LED every second.
     TimedAction blinkAction                 =       TimedAction(150,blink);
     //this initializes a TimedAction object that will change the state of an LED
@@ -28,6 +31,7 @@
     TimedAction blink9action = TimedAction(100, blink9);
     TimedAction blink8action = TimedAction(750, blink8);
     TimedAction pingAction = TimedAction(15, pingdo);
+    TimedAction readTempAction = TimedAction(50, readTemp);
     
     //pin / state variables
     #define ledPin 13
@@ -50,8 +54,23 @@ int redLED = 4;
 int greenLED = 3;
 int blueLED = 2;
 
+const byte laserPin = 17;
+const byte interruptPin = 18;
+volatile byte state = LOW;
+
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
+// DHT11 sensor pins
+#define DHTPIN 7 
+#define DHTTYPE DHT11
+ 
+int tempRedLed = 14;
+int tempBlueLed = 16;
+int tempGreenLed = 15;
+
+// DHT instance
+DHT dht(DHTPIN, DHTTYPE);
+                         
     void setup(){
       pinMode(ledPin,OUTPUT);
       pinMode(physicalPin, OUTPUT);
@@ -75,7 +94,18 @@ digitalWrite (redLED, HIGH);
 digitalWrite (greenLED, HIGH);
 digitalWrite (blueLED, HIGH);
  
-      
+  pinMode(laserPin, OUTPUT);
+  pinMode(interruptPin, INPUT);
+  //attachInterrupt(interruptPin, firelaser, LOW);
+  attachInterrupt(5, firelaser, LOW);
+      pinMode(tempRedLed, OUTPUT);
+ pinMode(tempBlueLed, OUTPUT);
+ pinMode(tempGreenLed, OUTPUT);
+ digitalWrite(tempRedLed, HIGH);
+ digitalWrite(tempBlueLed, HIGH);
+ digitalWrite(tempGreenLed, HIGH);
+  // Initialize DHT sensor
+  dht.begin();
       Serial.begin(9600);
     }
      
@@ -92,9 +122,61 @@ digitalWrite (blueLED, HIGH);
     blink9action.check();
     blink8action.check();
     pingAction.check();
-    
+    readTempAction.check();
     }
      
+     void readTemp() {
+     	// Measure the humidity & temperature
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit
+  float f = dht.readTemperature(true);
+  // Must send in temp in Fahrenheit!
+  float hi = dht.computeHeatIndex(f, h);
+ 
+ if (f >= 70.0 && f < 82.0) {
+ 	digitalWrite(tempRedLed, HIGH);
+ 	digitalWrite(tempBlueLed, HIGH);
+ 	digitalWrite(tempGreenLed, LOW);
+ 	 }
+ 
+ if (f >=82.0) {
+ 	digitalWrite(tempRedLed, LOW);
+ 	digitalWrite(tempBlueLed, HIGH);
+ 	digitalWrite(tempGreenLed, HIGH);
+ }
+ 
+ if (f < 70.0) {
+ 	digitalWrite(tempRedLed, HIGH);
+ 	digitalWrite(tempBlueLed, LOW);
+ 	digitalWrite(tempGreenLed, HIGH);
+ }
+ 
+  /*
+    // Transform to String
+    String tempc = String((int) t);
+    String tempF = String((int) f);
+    String hum = String((int) h);
+    String heat = String((int) hi); 
+    
+  Serial.print("Humidity: "); 
+  Serial.print(hum);
+  Serial.print(" %\t");
+  Serial.print("Temperature: "); 
+  Serial.print(tempc);
+  Serial.print(" *C , ");
+  Serial.print(f);
+  Serial.print(" *F\t  ");
+  Serial.print("Heat index: ");
+  Serial.print(heat);
+  Serial.println(" *F");
+   */
+     }
+     
+     void firelaser() {
+	digitalWrite(laserPin, state);
+  state = !state;
+}
     void pingdo() {
     unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds (uS).
  /* Serial.print("Ping: ");
