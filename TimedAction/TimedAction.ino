@@ -14,7 +14,8 @@
     */
      
     #include <TimedAction.h>
-     
+    #include <NewPing.h>
+    
     //this initializes a TimedAction object that will change the state of an LED every second.
     TimedAction blinkAction                 =       TimedAction(150,blink);
     //this initializes a TimedAction object that will change the state of an LED
@@ -26,17 +27,31 @@
     TimedAction blink10action = TimedAction(250, blink10);
     TimedAction blink9action = TimedAction(100, blink9);
     TimedAction blink8action = TimedAction(750, blink8);
+    TimedAction pingAction = TimedAction(15, pingdo);
     
     //pin / state variables
     #define ledPin 13
     #define physicalPin 12
+    #define TRIGGER_PIN  5  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN     6  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+
     boolean ledState = false;
     boolean led12state = false;
     boolean led11state = false;
     boolean led10state = false;
     boolean led9state = false;
     boolean led8state = false;
-     
+    int pingSensorIn;
+int triggerDistance = 5; //Your Too Close distance in Inches
+int triggerDistance2 = 10; //Getting closer distance (Caution!) in Inches
+int triggerDistance3 = 30; //No used 
+int redLED = 4;
+int greenLED = 3;
+int blueLED = 2;
+
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+
     void setup(){
       pinMode(ledPin,OUTPUT);
       pinMode(physicalPin, OUTPUT);
@@ -51,6 +66,15 @@
       digitalWrite(10, led10state);
       digitalWrite(9, led9state);
       digitalWrite(8, led8state);
+      
+      pinMode(redLED, OUTPUT);
+pinMode(greenLED, OUTPUT);
+pinMode(blueLED, OUTPUT);
+
+digitalWrite (redLED, HIGH);
+digitalWrite (greenLED, HIGH);
+digitalWrite (blueLED, HIGH);
+ 
       
       Serial.begin(9600);
     }
@@ -67,8 +91,50 @@
     blink10action.check();
     blink9action.check();
     blink8action.check();
+    pingAction.check();
     
     }
+     
+    void pingdo() {
+    unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds (uS).
+ /* Serial.print("Ping: ");
+  Serial.print(uS / US_ROUNDTRIP_IN); // Convert ping time to distance in cm and print result (0 = outside set distance range)
+  Serial.println(" in");
+  */
+  pingSensorIn = (uS / US_ROUNDTRIP_IN);
+      
+      if (pingSensorIn <= triggerDistance)  
+      {
+      	//To Close - RED Stop!
+        digitalWrite(redLED, LOW);
+		digitalWrite(greenLED, HIGH);
+		digitalWrite(blueLED, HIGH);
+	//	Serial.print("RED: ");
+	//	Serial.print(pingSensorIn);
+	//	Serial.println(" in.");
+      }
+       if (pingSensorIn > triggerDistance && pingSensorIn < triggerDistance2) 
+      {
+      	//Almost Close - YELLOW Caution!
+        digitalWrite(greenLED, LOW);
+		digitalWrite(redLED, LOW);
+		digitalWrite(blueLED, HIGH);
+	//	Serial.print("Yelow: ");
+	//	Serial.print(pingSensorIn);
+	//	Serial.println(" in.");
+      }
+      
+		if (pingSensorIn >= triggerDistance2)
+		{
+		//Clear - GREEN stuff is pretty far from you!	
+		digitalWrite(blueLED, HIGH);
+		digitalWrite(redLED, HIGH);
+		digitalWrite(greenLED, LOW);
+	//	Serial.print("Green: ");
+	//	Serial.print(pingSensorIn);
+	//	Serial.println(" in.");
+		}
+    } 
      
     //[url=http://arduino.cc/en/Tutorial/Blink]Examples->Digital->Blink[/url]
     void blink(){
