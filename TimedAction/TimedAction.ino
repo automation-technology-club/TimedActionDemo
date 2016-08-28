@@ -18,6 +18,9 @@
     #include <SPI.h>
 #include <string.h>
 #include "DHT.h"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
  
     //this initializes a TimedAction object that will change the state of an LED every second.
     TimedAction blinkAction                 =       TimedAction(150,blink);
@@ -70,6 +73,22 @@ int tempGreenLed = 15;
 
 // DHT instance
 DHT dht(DHTPIN, DHTTYPE);
+
+//OLED setup
+ #define OLED_DC     26
+ #define OLED_CS     27
+ #define OLED_RESET  24
+ Adafruit_SSD1306 display(OLED_DC, OLED_RESET, OLED_CS);
+ 
+
+
+
+#if (SSD1306_LCDHEIGHT != 64)
+#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#endif
+
+int nFrames = 36;
+
                          
     void setup(){
       pinMode(ledPin,OUTPUT);
@@ -106,11 +125,29 @@ digitalWrite (blueLED, HIGH);
  digitalWrite(tempGreenLed, HIGH);
   // Initialize DHT sensor
   dht.begin();
+  
+    display.begin(SSD1306_SWITCHCAPVCC);
+  // init done
+
+  // Show image buffer on the display hardware.
+  // Since the buffer is intialized with an Adafruit splashscreen
+  // internally, this will display the splashscreen.
+  display.display();
+  display.clearDisplay();
       Serial.begin(9600);
     }
      
     void loop() {
+    	for (int frame=0; frame < nFrames; frame++)
+  {
+    HariChord(frame);
+  }
     	check();
+    	for (int frame=(nFrames-1); frame >= 0; frame--)
+  {
+    HariChord(frame);
+  }
+  check();
     }
      
     void check(){
@@ -124,6 +161,31 @@ digitalWrite (blueLED, HIGH);
     pingAction.check();
     readTempAction.check();
     }
+     
+     void HariChord(int frame)
+{
+  display.clearDisplay();
+  int n = 7;
+  int r = frame * 64 / nFrames;
+  float rot = frame * 2*PI / nFrames;
+  for (int i=0; i<(n-1); i++)
+  {
+    float a = rot + i * 2*PI / n;
+    int x1 = 64 + cos(a) * r;
+    int y1 = 32 + sin(a) * r;
+    check();
+    for (int j=i+1; j<n; j++)
+    
+    {
+      a = rot + j * 2*PI / n;
+      int x2 = 64 + cos(a) * r;
+      int y2 = 32 + sin(a) * r;
+      display.drawLine(x1,y1, x2,y2, WHITE);
+      check();
+    }
+  }
+  display.display();
+}
      
      void readTemp() {
      	// Measure the humidity & temperature
