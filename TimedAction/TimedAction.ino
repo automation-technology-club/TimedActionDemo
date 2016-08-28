@@ -35,6 +35,7 @@
     TimedAction blink8action = TimedAction(750, blink8);
     TimedAction pingAction = TimedAction(15, pingdo);
     TimedAction readTempAction = TimedAction(50, readTemp);
+    TimedAction displayOLEDAction = TimedAction(5000, displayOLED);
     
     //pin / state variables
     #define ledPin 13
@@ -138,16 +139,7 @@ digitalWrite (blueLED, HIGH);
     }
      
     void loop() {
-    	for (int frame=0; frame < nFrames; frame++)
-  {
-    HariChord(frame);
-  }
-    	check();
-    	for (int frame=(nFrames-1); frame >= 0; frame--)
-  {
-    HariChord(frame);
-  }
-  check();
+    check();
     }
      
     void check(){
@@ -160,8 +152,21 @@ digitalWrite (blueLED, HIGH);
     blink8action.check();
     pingAction.check();
     readTempAction.check();
+    displayOLEDAction.check();
     }
      
+     void displayOLED() {
+     		for (int frame=0; frame < nFrames; frame++)
+  {
+    HariChord(frame);
+  }
+    	check();
+    	for (int frame=(nFrames-1); frame >= 0; frame--)
+  {
+    HariChord(frame);
+  }
+  check();
+     }
      void HariChord(int frame)
 {
   display.clearDisplay();
